@@ -1,6 +1,8 @@
 import os
 from pathlib import Path
 
+from django.core.files.base import File
+from django.core.files.storage import default_storage
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from PIL import Image, ImageDraw, ImageEnhance, ImageFilter, ImageOps
@@ -36,6 +38,7 @@ DEFAULT_FAVICON_IMAGE = "assets/img/favicon.png"
 DEFAULT_APPLE_TOUCH_ICON = "assets/img/apple-touch-icon.png"
 DEFAULT_HERO_BACKGROUND_IMAGE = "assets/img/hero-bg.jpg"
 DEFAULT_ASSISTANT_ICON = "assets/img/site/snail-bot.png"
+DEFAULT_RESUME_DOCUMENT = ""
 IMAGE_RESAMPLING = getattr(Image, "Resampling", Image).LANCZOS
 
 
@@ -47,6 +50,11 @@ class Command(BaseCommand):
             "--profile-source",
             dest="profile_source",
             help="Absolute path to a profile photo to import into the portfolio static assets.",
+        )
+        parser.add_argument(
+            "--resume-source",
+            dest="resume_source",
+            help="Absolute path to a CV or resume file to import into the portfolio media storage.",
         )
 
     def build_circle_mask(self, size):
@@ -171,6 +179,33 @@ class Command(BaseCommand):
 
         return canvas
 
+    def build_resume_document(self, resume_source):
+        resolved_source = (resume_source or os.getenv("PORTFOLIO_RESUME_SOURCE", "")).strip()
+        if not resolved_source:
+            return DEFAULT_RESUME_DOCUMENT
+
+        source_path = Path(resolved_source).expanduser()
+        if not source_path.exists():
+            self.stdout.write(
+                self.style.WARNING(
+                    f"Resume file source not found: {source_path}. Keeping resume document empty."
+                )
+            )
+            return DEFAULT_RESUME_DOCUMENT
+
+        file_suffix = source_path.suffix.lower() or ".pdf"
+        storage_path = f"uploads/site/resume/rashid-zada-cv{file_suffix}"
+        if default_storage.exists(storage_path):
+            default_storage.delete(storage_path)
+
+        with source_path.open("rb") as source_file:
+            saved_path = default_storage.save(storage_path, File(source_file))
+
+        self.stdout.write(
+            self.style.SUCCESS(f"Imported resume document from {source_path}.")
+        )
+        return saved_path
+
     def build_site_image_assets(self, profile_source):
         resolved_source = (profile_source or os.getenv("PORTFOLIO_PROFILE_SOURCE", "")).strip()
         image_paths = {
@@ -275,6 +310,7 @@ class Command(BaseCommand):
         SiteConfiguration.objects.all().delete()
 
         image_paths = self.build_site_image_assets(options.get("profile_source"))
+        resume_document = self.build_resume_document(options.get("resume_source"))
 
         site = SiteConfiguration.objects.create(
             site_name="Rashid Zada",
@@ -320,6 +356,7 @@ class Command(BaseCommand):
             github_url="https://github.com/Rashidzada/Rashidzada",
             linkedin_url="https://www.linkedin.com/in/rashid-zada-14b309192/",
             typing_profile_url="https://keyhero.com/profile/user828295/",
+            resume_document=resume_document,
             profile_image=image_paths["profile_image"],
             favicon_image=image_paths["favicon_image"],
             apple_touch_icon=image_paths["apple_touch_icon"],

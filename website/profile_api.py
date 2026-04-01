@@ -1,4 +1,5 @@
 from website.image_utils import resolve_image_src
+from website.file_utils import resolve_document_download_url, resolve_document_view_url
 from website.models import (
     AboutFact,
     Certification,
@@ -52,6 +53,11 @@ def serialize_site(site):
         "github_url": site.github_url,
         "linkedin_url": site.linkedin_url,
         "typing_profile_url": site.typing_profile_url,
+        "resume_document": {
+            "path": site.resume_document or "",
+            "view_url": resolve_document_view_url(site.resume_document),
+            "download_url": resolve_document_download_url(site.resume_document),
+        },
         "profile_image": image_payload(site.profile_image),
         "favicon_image": image_payload(site.favicon_image),
         "apple_touch_icon": image_payload(site.apple_touch_icon),

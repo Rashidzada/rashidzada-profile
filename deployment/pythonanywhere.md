@@ -14,6 +14,8 @@ Set the project up with these steps:
    `DEEPSEEK_API_KEY`
    `DEEPSEEK_BASE_URL`
    `DEEPSEEK_MODEL`
+   If you want the seeded CV file imported automatically, also set:
+   `PORTFOLIO_RESUME_SOURCE`
    Use only the hostname in `DJANGO_ALLOWED_HOSTS`.
    Correct: `rashidzada.pythonanywhere.com`
    Not valid for Django allowed hosts: `https://rashidzada.pythonanywhere.com/pythonnaywhere`
@@ -39,6 +41,12 @@ Image handling in admin:
 - Paste a public image URL
 - Paste a public Google Drive sharing URL
 - Clear the current image if needed
+
+Resume handling in admin:
+- Upload your CV directly
+- Paste a public file URL
+- Paste a public Google Drive sharing URL
+- Site shows View CV and Download buttons on the resume page
 
 Snail Bot:
 - Uses the OpenAI SDK against DeepSeek when `DEEPSEEK_API_KEY` is configured

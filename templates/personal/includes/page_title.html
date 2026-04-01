@@ -10,11 +10,22 @@
     </div>
   </div>
   <nav class="breadcrumbs">
-    <div class="container">
+    <div class="container d-flex flex-wrap align-items-center justify-content-between gap-3">
       <ol>
         <li><a href="{% url 'home' %}">Home</a></li>
         <li class="current">{{ title }}</li>
       </ol>
+      {% if show_resume_actions and site.resume_document %}
+        <div class="page-title-actions">
+          <a href="{{ site.resume_view_url }}" target="_blank" rel="noopener" class="page-title-action">
+            <i class="bi bi-eye"></i>
+            <span>View CV</span>
+          </a>
+          <a href="{{ site.resume_download_url }}" target="_blank" rel="noopener" class="page-title-action page-title-action-icon">
+            <i class="bi bi-download"></i>
+          </a>
+        </div>
+      {% endif %}
     </div>
   </nav>
 </div>

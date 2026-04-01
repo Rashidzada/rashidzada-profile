@@ -12,6 +12,10 @@ A production-oriented Django profile/portfolio project for Rashid Zada. The site
   - upload from computer
   - public image URL
   - public Google Drive sharing URL
+- CV/resume management that supports:
+  - upload from computer
+  - public file URL
+  - public Google Drive sharing URL
   - clearing an existing image
 - Frontend image rendering that supports:
   - static seeded assets
@@ -133,6 +137,7 @@ Important variables:
 - `DEEPSEEK_BASE_URL`
 - `DEEPSEEK_MODEL`
 - `PORTFOLIO_PROFILE_SOURCE`
+- `PORTFOLIO_RESUME_SOURCE`
 
 ### Allowed hosts note
 
@@ -236,6 +241,22 @@ Stream endpoint:
 curl -X POST http://127.0.0.1:8000/api/snail-bot/stream/ \
   -H "Content-Type: application/json" \
   -d "{\"message\":\"Tell me about Rashid's projects\"}"
+```
+
+## Resume / CV management
+
+The resume page can show `View CV` and `Download` buttons from the Django admin.
+
+Admin supports:
+
+- CV upload from your computer
+- public file URL
+- public Google Drive sharing link
+
+Seed from a local file:
+
+```bash
+python manage.py seed_portfolio --resume-source "C:\path\to\your-latest-cv.pdf"
 ```
 
 ## Verification commands

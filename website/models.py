@@ -30,6 +30,7 @@ class SiteConfiguration(models.Model):
     github_url = models.URLField()
     linkedin_url = models.URLField()
     typing_profile_url = models.URLField(blank=True)
+    resume_document = models.CharField(max_length=255, blank=True, default="")
     profile_image = models.CharField(max_length=255, blank=True, default="")
     favicon_image = models.CharField(max_length=255, default="assets/img/favicon.png")
     apple_touch_icon = models.CharField(max_length=255, default="assets/img/apple-touch-icon.png")
@@ -62,6 +63,18 @@ class SiteConfiguration(models.Model):
     def initials(self):
         initials = [part[0].upper() for part in self.full_name.split() if part][:2]
         return "".join(initials) or self.site_name[:2].upper()
+
+    @property
+    def resume_view_url(self):
+        from .file_utils import resolve_document_view_url
+
+        return resolve_document_view_url(self.resume_document)
+
+    @property
+    def resume_download_url(self):
+        from .file_utils import resolve_document_download_url
+
+        return resolve_document_download_url(self.resume_document)
 
 
 class PageIntro(models.Model):

@@ -122,7 +122,20 @@ class PageRoutingTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Profile image upload")
         self.assertContains(response, "Profile image URL")
+        self.assertContains(response, "Resume document upload")
+        self.assertContains(response, "Resume document URL")
         self.assertContains(response, "Google Drive")
+
+    def test_resume_page_shows_cv_actions_when_resume_is_configured(self):
+        self.site.resume_document = "https://example.com/rashid-zada-cv.pdf"
+        self.site.save()
+
+        response = self.client.get(reverse("resume"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "View CV")
+        self.assertContains(response, "bi bi-download")
+        self.assertContains(response, "https://example.com/rashid-zada-cv.pdf")
 
     def test_profile_api_returns_seeded_content(self):
         response = self.client.get(reverse("api-profile"))
@@ -132,6 +145,7 @@ class PageRoutingTests(TestCase):
         self.assertTrue(payload["ok"])
         self.assertEqual(payload["data"]["site"]["full_name"], "Rashid Zada")
         self.assertEqual(payload["data"]["site"]["assistant_name"], "Snail Bot")
+        self.assertIn("resume_document", payload["data"]["site"])
         self.assertGreaterEqual(len(payload["data"]["services"]), 1)
 
     def test_service_detail_api_returns_requested_service(self):

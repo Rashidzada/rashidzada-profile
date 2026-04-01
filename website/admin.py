@@ -1,6 +1,9 @@
+from django import forms
 from django.contrib import admin
 
+from .admin_file_tools import render_admin_file_link, save_admin_uploaded_file
 from .admin_image_tools import build_image_admin_form, render_admin_image_preview
+from .file_utils import is_external_document_url, normalize_document_source
 from .models import (
     AboutFact,
     Certification,
@@ -38,7 +41,7 @@ def preview_display(field_name, label):
     return _preview
 
 
-SiteConfigurationAdminForm = build_image_admin_form(
+BaseSiteConfigurationAdminForm = build_image_admin_form(
     SiteConfiguration,
     {
         "profile_image": {"label": "Profile image", "folder": "site/profile"},
@@ -48,6 +51,75 @@ SiteConfigurationAdminForm = build_image_admin_form(
         "assistant_icon": {"label": "Assistant icon", "folder": "site/assistant"},
     },
 )
+
+
+class SiteConfigurationAdminForm(BaseSiteConfigurationAdminForm):
+    resume_document_upload = forms.FileField(
+        required=False,
+        label="Resume document upload",
+        help_text="Upload your latest CV or resume file.",
+    )
+    resume_document_url_input = forms.URLField(
+        required=False,
+        label="Resume document URL",
+        help_text="Paste a public file URL or a Google Drive sharing link.",
+    )
+    resume_document_clear = forms.BooleanField(
+        required=False,
+        label="Clear resume document",
+    )
+
+    class Meta(BaseSiteConfigurationAdminForm.Meta):
+        exclude = tuple(BaseSiteConfigurationAdminForm.Meta.exclude) + ("resume_document",)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        current_value = normalize_document_source(getattr(self.instance, "resume_document", ""))
+        if is_external_document_url(current_value):
+            self.fields["resume_document_url_input"].initial = current_value
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        upload_value = cleaned_data.get("resume_document_upload")
+        url_value = (cleaned_data.get("resume_document_url_input") or "").strip()
+        clear_value = cleaned_data.get("resume_document_clear")
+        current_value = getattr(self.instance, "resume_document", "")
+
+        if clear_value and (upload_value or url_value):
+            self.add_error(
+                "resume_document_clear",
+                "Use clear by itself, or provide a new upload/URL.",
+            )
+            return cleaned_data
+
+        if upload_value and url_value:
+            self.add_error(
+                "resume_document_url_input",
+                "Use either upload or URL, not both.",
+            )
+            return cleaned_data
+
+        if clear_value:
+            self._resume_document_value = ""
+        elif upload_value:
+            self._resume_document_value = save_admin_uploaded_file(upload_value, "site/resume")
+        elif url_value:
+            self._resume_document_value = normalize_document_source(url_value)
+        else:
+            self._resume_document_value = current_value
+
+        return cleaned_data
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        instance.resume_document = getattr(self, "_resume_document_value", instance.resume_document)
+        if commit:
+            instance.save()
+            self.save_m2m()
+        return instance
+
+
 ProfileHighlightAdminForm = build_image_admin_form(
     ProfileHighlight,
     {
@@ -99,6 +171,14 @@ class ProjectImageInline(admin.StackedInline):
     image_preview = preview_display("image_path", "Gallery image")
 
 
+def file_link_display(field_name, label):
+    @admin.display(description=f"{label} links")
+    def _file_link(self, obj):
+        return render_admin_file_link(obj, field_name, label)
+
+    return _file_link
+
+
 @admin.register(SiteConfiguration)
 class SiteConfigurationAdmin(admin.ModelAdmin):
     form = SiteConfigurationAdminForm
@@ -109,6 +189,7 @@ class SiteConfigurationAdmin(admin.ModelAdmin):
         "apple_touch_icon_preview",
         "hero_background_image_preview",
         "assistant_icon_preview",
+        "resume_document_preview",
     )
     fieldsets = (
         (
@@ -146,6 +227,8 @@ class SiteConfigurationAdmin(admin.ModelAdmin):
                     "github_url",
                     "linkedin_url",
                     "typing_profile_url",
+                    "resume_document_preview",
+                    ("resume_document_upload", "resume_document_url_input", "resume_document_clear"),
                 )
             },
         ),
@@ -174,6 +257,7 @@ class SiteConfigurationAdmin(admin.ModelAdmin):
     apple_touch_icon_preview = preview_display("apple_touch_icon", "Apple touch icon")
     hero_background_image_preview = preview_display("hero_background_image", "Hero background image")
     assistant_icon_preview = preview_display("assistant_icon", "Assistant icon")
+    resume_document_preview = file_link_display("resume_document", "Resume document")
 
 
 @admin.register(PageIntro)

@@ -622,6 +622,55 @@ h6 {
   color: color-mix(in srgb, var(--default-color), transparent 70%);
 }
 
+.page-title .page-title-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.page-title .page-title-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 16px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid color-mix(in srgb, var(--accent-color), transparent 72%);
+  color: var(--default-color);
+  font-size: 14px;
+  font-weight: 600;
+  transition: 0.3s;
+}
+
+.page-title .page-title-action:hover {
+  color: #ffffff;
+  border-color: color-mix(in srgb, var(--accent-color), transparent 28%);
+  background: color-mix(in srgb, var(--accent-color), transparent 82%);
+}
+
+.page-title .page-title-action i {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.page-title .page-title-action-icon {
+  justify-content: center;
+  width: 42px;
+  min-width: 42px;
+  padding: 0;
+}
+
+@media (max-width: 767px) {
+  .page-title .page-title-actions {
+    width: 100%;
+  }
+
+  .page-title .page-title-action {
+    justify-content: center;
+  }
+}
+
 /*--------------------------------------------------------------
 # Global Sections
 --------------------------------------------------------------*/
