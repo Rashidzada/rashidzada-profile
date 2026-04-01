@@ -82,73 +82,65 @@
     data-stream-url="{% url 'api-snail-bot-stream' %}"
     data-assistant-name="{{ site.assistant_name|default:'Snail Bot' }}"
     data-greeting="{{ site.assistant_greeting|escape }}"
-  >
-    <button
-      type="button"
-      class="snail-bot-toggle"
-      id="snail-bot-toggle"
+    >
+      <button
+        type="button"
+        class="snail-bot-toggle"
+        id="snail-bot-toggle"
       aria-controls="snail-bot-panel"
       aria-expanded="false"
       aria-label="Open {{ site.assistant_name|default:'Snail Bot' }}"
-    >
-      <span class="snail-bot-toggle-icon">
-        <img
-          src="{{ site.assistant_icon|asset_url }}"
-          alt="{{ site.assistant_name|default:'Snail Bot' }}"
-          class="snail-bot-icon-image"
-        >
-      </span>
-      <span class="snail-bot-toggle-copy">
-        <strong>{{ site.assistant_name|default:"Snail Bot" }}</strong>
-        <small>Profile only</small>
-      </span>
-    </button>
+      >
+        <span class="snail-bot-toggle-icon">
+          <img
+            src="{{ site.assistant_icon|asset_url }}"
+            alt="{{ site.assistant_name|default:'Snail Bot' }}"
+            class="snail-bot-icon-image"
+          >
+        </span>
+      </button>
 
-    <section class="snail-bot-panel" id="snail-bot-panel" hidden aria-hidden="true">
-      <div class="snail-bot-panel-header">
-        <div class="snail-bot-panel-title">
+      <section class="snail-bot-panel" id="snail-bot-panel" hidden aria-hidden="true">
+        <div class="snail-bot-panel-header">
+          <div class="snail-bot-panel-title">
           <img
             src="{{ site.assistant_icon|asset_url }}"
             alt="{{ site.assistant_name|default:'Snail Bot' }}"
             class="snail-bot-panel-icon"
-          >
-          <div>
-            <strong>{{ site.assistant_name|default:"Snail Bot" }}</strong>
-            <span>Answers only about Rashid Zada</span>
+            >
+            <div>
+              <strong>{{ site.assistant_name|default:"Snail Bot" }}</strong>
+              <span id="snail-bot-status">Live profile help</span>
+            </div>
           </div>
-        </div>
-        <button type="button" class="snail-bot-close" id="snail-bot-close" aria-label="Close assistant">
-          <i class="bi bi-x-lg"></i>
-        </button>
+          <button type="button" class="snail-bot-close" id="snail-bot-close" aria-label="Close assistant">
+            <i class="bi bi-x-lg"></i>
+          </button>
       </div>
 
       <div class="snail-bot-messages" id="snail-bot-messages"></div>
 
-      <div class="snail-bot-suggestions" id="snail-bot-suggestions">
-        <button type="button" class="snail-bot-chip">What does Rashid do?</button>
-        <button type="button" class="snail-bot-chip">Show Rashid's skills</button>
-        <button type="button" class="snail-bot-chip">Tell me about projects</button>
-        <button type="button" class="snail-bot-chip">How can I contact Rashid?</button>
-      </div>
+        <div class="snail-bot-suggestions" id="snail-bot-suggestions">
+          <button type="button" class="snail-bot-chip">What does Rashid do?</button>
+          <button type="button" class="snail-bot-chip">Skills</button>
+          <button type="button" class="snail-bot-chip">Projects</button>
+          <button type="button" class="snail-bot-chip">Contact</button>
+        </div>
 
-      <form class="snail-bot-form" id="snail-bot-form">
-        <label class="visually-hidden" for="snail-bot-input">Ask Snail Bot</label>
-        <div class="snail-bot-composer">
+        <form class="snail-bot-form" id="snail-bot-form">
+          <label class="visually-hidden" for="snail-bot-input">Ask Snail Bot</label>
+          <div class="snail-bot-composer">
           <textarea
             id="snail-bot-input"
             class="snail-bot-input"
             rows="1"
-            maxlength="400"
-            placeholder="Ask about skills, services, projects, experience, or contact details"
-          ></textarea>
-          <div class="snail-bot-composer-meta">
-            <span class="snail-bot-composer-hint">Enter to send</span>
-            <span class="snail-bot-character-count" id="snail-bot-character-count">0/400</span>
+              maxlength="400"
+              placeholder="Ask about Rashid's profile, work, skills, or contact details"
+            ></textarea>
           </div>
-        </div>
-        <button type="submit" class="snail-bot-send" id="snail-bot-send">
-          <i class="bi bi-send-fill"></i>
-        </button>
+          <button type="submit" class="snail-bot-send" id="snail-bot-send">
+            <i class="bi bi-send-fill"></i>
+          </button>
       </form>
     </section>
   </div>

@@ -14,7 +14,7 @@
   const form = document.getElementById("snail-bot-form");
   const input = document.getElementById("snail-bot-input");
   const sendButton = document.getElementById("snail-bot-send");
-  const countNode = document.getElementById("snail-bot-character-count");
+  const statusNode = document.getElementById("snail-bot-status");
   const assistantName = widget.dataset.assistantName || "Snail Bot";
   const greeting =
     widget.dataset.greeting ||
@@ -41,20 +41,13 @@
     messages.scrollTop = messages.scrollHeight;
   }
 
-  function createMessageBubble(role, content, modeLabel) {
+  function createMessageBubble(role, content) {
     const wrapper = document.createElement("article");
     wrapper.className = `snail-bot-message snail-bot-message-${role}`;
 
     const meta = document.createElement("div");
     meta.className = "snail-bot-message-meta";
     meta.textContent = role === "assistant" ? assistantName : "You";
-
-    if (modeLabel) {
-      const badge = document.createElement("span");
-      badge.className = "snail-bot-mode-badge";
-      badge.textContent = modeLabel;
-      meta.appendChild(badge);
-    }
 
     const bubble = document.createElement("div");
     bubble.className = "snail-bot-bubble";
@@ -65,8 +58,8 @@
     return { wrapper, meta, bubble };
   }
 
-  function appendMessage(role, content, modeLabel) {
-    const node = createMessageBubble(role, content, modeLabel);
+  function appendMessage(role, content) {
+    const node = createMessageBubble(role, content);
     messages.appendChild(node.wrapper);
     scrollMessagesToEnd();
     return node;
@@ -76,7 +69,7 @@
     if (hasBootMessage) {
       return;
     }
-    appendMessage("assistant", greeting, "profile");
+    appendMessage("assistant", greeting);
     history.push({ role: "assistant", content: greeting });
     hasBootMessage = true;
   }
@@ -88,9 +81,9 @@
     input.disabled = sending;
   }
 
-  function updateCounter() {
-    if (countNode) {
-      countNode.textContent = `${input.value.length}/400`;
+  function setAssistantStatus(text) {
+    if (statusNode) {
+      statusNode.textContent = text;
     }
   }
 
@@ -101,27 +94,18 @@
 
   function buildModeLabel(mode) {
     if (mode === "deepseek") {
-      return "live ai";
+      return "Live AI";
     }
     if (mode === "guard") {
-      return "profile only";
+      return "Profile only";
     }
-    return "local";
-  }
-
-  function setMessageMode(metaNode, mode) {
-    let badge = metaNode.querySelector(".snail-bot-mode-badge");
-    if (!badge) {
-      badge = document.createElement("span");
-      badge.className = "snail-bot-mode-badge";
-      metaNode.appendChild(badge);
-    }
-    badge.textContent = buildModeLabel(mode);
+    return "Local answer";
   }
 
   function setTypingBubble(node) {
     node.wrapper.classList.add("snail-bot-message-typing");
     node.bubble.innerHTML = '<span class="snail-bot-dots"><span></span><span></span><span></span></span>';
+    setAssistantStatus("Typing...");
   }
 
   function clearTypingBubble(node) {
@@ -151,7 +135,7 @@
           const event = JSON.parse(line);
 
           if (event.type === "meta") {
-            setMessageMode(bubbleNode.meta, event.mode);
+            setAssistantStatus(buildModeLabel(event.mode));
             clearTypingBubble(bubbleNode);
           } else if (event.type === "token") {
             clearTypingBubble(bubbleNode);
@@ -184,10 +168,9 @@
 
     input.value = "";
     resizeInput();
-    updateCounter();
     setSendingState(true);
 
-    const assistantNode = appendMessage("assistant", "", "");
+    const assistantNode = appendMessage("assistant", "");
     setTypingBubble(assistantNode);
 
     try {
@@ -213,7 +196,7 @@
       } else {
         assistantNode.bubble.textContent =
           "Snail Bot could not answer right now. Please try again with a profile-related question.";
-        setMessageMode(assistantNode.meta, "guard");
+        setAssistantStatus(buildModeLabel("guard"));
       }
     } catch (error) {
       try {
@@ -236,12 +219,12 @@
         }
 
         const reply = payload.data || {};
-        setMessageMode(assistantNode.meta, reply.mode);
+        setAssistantStatus(buildModeLabel(reply.mode));
         assistantNode.bubble.textContent = reply.message || greeting;
         history.push({ role: "assistant", content: assistantNode.bubble.textContent });
       } catch (fallbackError) {
         clearTypingBubble(assistantNode);
-        setMessageMode(assistantNode.meta, "guard");
+        setAssistantStatus(buildModeLabel("guard"));
         assistantNode.bubble.textContent =
           "Snail Bot is temporarily unavailable. Please try again in a moment.";
       }
@@ -290,9 +273,8 @@
 
   input.addEventListener("input", function () {
     resizeInput();
-    updateCounter();
   });
 
-  updateCounter();
+  setAssistantStatus("Live profile help");
   resizeInput();
 })();
