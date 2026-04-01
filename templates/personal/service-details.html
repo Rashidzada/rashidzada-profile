@@ -1,0 +1,41 @@
+{% extends "personal/base.html" %}
+{% load static site_assets %}
+
+{% block title %}{{ selected_service.title }} - {{ site.full_name }}{% endblock %}
+{% block body_class %}service-details-page{% endblock %}
+
+{% block main %}
+{% include "personal/includes/page_title.html" with title=selected_service.title description=selected_service.short_description %}
+
+<section id="service-details" class="service-details section">
+  <div class="container">
+    <div class="row gy-4">
+      <div class="col-lg-4" data-aos="fade-up" data-aos-delay="100">
+        <div class="services-list">
+          {% for service in services_list %}
+            <a href="{{ service.get_absolute_url }}" {% if service.id == selected_service.id %}class="active"{% endif %}>{{ service.title }}</a>
+          {% endfor %}
+        </div>
+
+        <h4>{{ selected_service.summary_heading }}</h4>
+        <p>{{ selected_service.summary_text }}</p>
+      </div>
+
+      <div class="col-lg-8" data-aos="fade-up" data-aos-delay="200">
+        <img src="{{ selected_service.image_path|asset_url }}" alt="{{ selected_service.title }}" class="img-fluid services-img">
+        <h3>{{ selected_service.detail_heading }}</h3>
+        <p>{{ selected_service.detail_intro }}</p>
+        <ul>
+          {% for bullet in selected_service.bullets.all %}
+            <li><i class="bi bi-check-circle"></i> <span>{{ bullet.text }}</span></li>
+          {% endfor %}
+        </ul>
+        <p>{{ selected_service.detail_body }}</p>
+        {% if selected_service.detail_footer %}
+          <p>{{ selected_service.detail_footer }}</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

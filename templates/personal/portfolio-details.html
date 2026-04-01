@@ -1,0 +1,71 @@
+{% extends "personal/base.html" %}
+{% load static site_assets %}
+
+{% block title %}{{ selected_project.title }} - {{ site.full_name }}{% endblock %}
+{% block body_class %}portfolio-details-page{% endblock %}
+
+{% block main %}
+{% include "personal/includes/page_title.html" with title=selected_project.title description=selected_project.summary %}
+
+<section id="portfolio-details" class="portfolio-details section">
+  <div class="container" data-aos="fade-up" data-aos-delay="100">
+    <div class="row gy-4">
+      <div class="col-lg-8">
+        <div class="portfolio-details-slider swiper init-swiper">
+          <script type="application/json" class="swiper-config">
+            {
+              "loop": true,
+              "speed": 600,
+              "autoplay": {
+                "delay": 5000
+              },
+              "slidesPerView": "auto",
+              "pagination": {
+                "el": ".swiper-pagination",
+                "type": "bullets",
+                "clickable": true
+              }
+            }
+          </script>
+
+          <div class="swiper-wrapper align-items-center">
+            {% for image in selected_project.images.all %}
+              <div class="swiper-slide">
+                <img src="{{ image.image_path|asset_url }}" alt="{{ selected_project.title }}">
+              </div>
+            {% endfor %}
+          </div>
+          <div class="swiper-pagination"></div>
+        </div>
+      </div>
+
+      <div class="col-lg-4">
+        <div class="portfolio-info" data-aos="fade-up" data-aos-delay="200">
+          <h3>Project information</h3>
+          <ul>
+            <li><strong>Category</strong>: {{ selected_project.category.name }}</li>
+            {% if selected_project.client %}
+              <li><strong>Focus</strong>: {{ selected_project.client }}</li>
+            {% endif %}
+            {% if selected_project.project_date_label %}
+              <li><strong>Project stage</strong>: {{ selected_project.project_date_label }}</li>
+            {% endif %}
+            {% if selected_project.project_url %}
+              <li><strong>Project URL</strong>: <a href="{{ selected_project.project_url }}" target="_blank" rel="noopener">{{ selected_project.project_url }}</a></li>
+            {% endif %}
+          </ul>
+        </div>
+        <div class="portfolio-description" data-aos="fade-up" data-aos-delay="300">
+          <h2>{{ selected_project.detail_heading }}</h2>
+          <p>{{ selected_project.description }}</p>
+          <ul>
+            {% for highlight in selected_project.highlights.all %}
+              <li>{{ highlight.text }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

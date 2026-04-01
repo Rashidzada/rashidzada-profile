@@ -1,0 +1,72 @@
+{% extends "personal/base.html" %}
+
+{% block title %}{{ page_intro.title }} - {{ site.full_name }}{% endblock %}
+{% block body_class %}contact-page{% endblock %}
+
+{% block main %}
+{% include "personal/includes/page_title.html" with title=page_intro.title description=page_intro.description %}
+
+<section id="contact" class="contact section">
+  <div class="container" data-aos="fade-up" data-aos-delay="100">
+    <div class="row gy-4">
+      <div class="col-md-6">
+        <div class="info-item whatsapp-item d-flex align-items-center" data-aos="fade-up" data-aos-delay="200">
+          <i class="icon bi bi-whatsapp flex-shrink-0"></i>
+          <div>
+            <h3>WhatsApp</h3>
+            <p><a href="{{ site.whatsapp_url }}" target="_blank" rel="noopener">{{ site.phone_display }}</a></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="info-item d-flex align-items-center" data-aos="fade-up" data-aos-delay="300">
+          <i class="icon bi bi-telephone flex-shrink-0"></i>
+          <div>
+            <h3>Call Me</h3>
+            <p><a href="{{ site.phone_uri }}">{{ site.phone_display }}</a></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="info-item d-flex align-items-center" data-aos="fade-up" data-aos-delay="400">
+          <i class="icon bi bi-envelope flex-shrink-0"></i>
+          <div>
+            <h3>Email</h3>
+            <p>{{ site.email }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="info-item d-flex align-items-center" data-aos="fade-up" data-aos-delay="500">
+          <i class="icon bi bi-geo-alt flex-shrink-0"></i>
+          <div>
+            <h3>Location</h3>
+            <p>{{ site.location }} | {{ site.availability }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="whatsapp-contact-box" data-aos="fade-up" data-aos-delay="400">
+      <div class="whatsapp-contact-icon">
+        <i class="bi bi-whatsapp"></i>
+      </div>
+      <div class="whatsapp-contact-content">
+        <span class="whatsapp-contact-label">Direct WhatsApp Chat</span>
+        <h3>Send me a message instantly</h3>
+        <p>The fastest way to reach me is on WhatsApp. Click below to start a real conversation directly on my phone.</p>
+        <div class="whatsapp-contact-actions">
+          <a href="{{ site.whatsapp_url }}" class="whatsapp-contact-button" target="_blank" rel="noopener">
+            <i class="bi bi-whatsapp"></i>
+            <span>Chat on WhatsApp</span>
+          </a>
+          <a href="{{ site.phone_uri }}" class="whatsapp-contact-number">{{ site.phone_display }}</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

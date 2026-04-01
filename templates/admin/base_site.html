@@ -1,0 +1,17 @@
+{% extends "admin/base.html" %}
+{% load i18n static %}
+
+{% block title %}
+  {% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | {{ site_title|default:_("Profile Admin") }}
+{% endblock %}
+
+{% block branding %}
+  <div id="site-name">
+    <a href="{% url 'admin:index' %}">{{ site_header|default:_("Rashid Zada Profile") }}</a>
+    <div style="font-size: 12px; font-weight: 500; opacity: 0.85; margin-top: 4px;">
+      Profile content manager
+    </div>
+  </div>
+{% endblock %}
+
+{% block nav-global %}{% endblock %}

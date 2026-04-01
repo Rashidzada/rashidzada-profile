@@ -1,0 +1,59 @@
+{% extends "personal/base.html" %}
+
+{% block title %}{{ page_intro.title }} - {{ site.full_name }}{% endblock %}
+{% block body_class %}resume-page{% endblock %}
+
+{% block main %}
+{% include "personal/includes/page_title.html" with title=page_intro.title description=page_intro.description %}
+
+<section id="resume" class="resume section">
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-6" data-aos="fade-up" data-aos-delay="100">
+        <h3 class="resume-title">Summary</h3>
+        <div class="resume-item pb-0">
+          <h4>{{ site.full_name }}</h4>
+          <p><em>{{ site.professional_summary }}</em></p>
+          <ul>
+            <li>{{ site.location }} | {{ site.availability }}</li>
+            <li>{{ site.phone_display }}</li>
+            <li>{{ site.email }}</li>
+            <li><a href="{{ site.portfolio_url }}" target="_blank" rel="noopener">{{ site.portfolio_url }}</a></li>
+          </ul>
+        </div>
+
+        <h3 class="resume-title">Education</h3>
+        {% for education in education_items %}
+          <div class="resume-item">
+            <h4>{{ education.degree }}</h4>
+            <h5>{{ education.start_year }} - {{ education.end_year }}</h5>
+            <p><em>{{ education.institution }}</em></p>
+            {% if education.description %}
+              <p>{{ education.description }}</p>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+
+      <div class="col-lg-6" data-aos="fade-up" data-aos-delay="200">
+        <h3 class="resume-title">Professional Experience</h3>
+        {% for experience in experience_items %}
+          <div class="resume-item">
+            <h4>{{ experience.role_title }}</h4>
+            <h5>{{ experience.period_label }}</h5>
+            <p><em>{{ experience.organization }}{% if experience.location %}, {{ experience.location }}{% endif %}</em></p>
+            {% if experience.summary %}
+              <p>{{ experience.summary }}</p>
+            {% endif %}
+            <ul>
+              {% for bullet in experience.bullets.all %}
+                <li>{{ bullet.text }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
