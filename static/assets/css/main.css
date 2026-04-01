@@ -2070,8 +2070,13 @@ section,
   display: flex;
   flex-direction: column;
   gap: 14px;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(24, 210, 110, 0.35) rgba(255, 255, 255, 0.04);
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.snail-bot-messages::-webkit-scrollbar {
+  width: 0;
+  height: 0;
 }
 
 .snail-bot-message {
@@ -2198,6 +2203,13 @@ section,
   line-height: 1.5;
   box-shadow: none;
   overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.snail-bot-input::-webkit-scrollbar {
+  width: 0;
+  height: 0;
 }
 
 .snail-bot-input::placeholder {
