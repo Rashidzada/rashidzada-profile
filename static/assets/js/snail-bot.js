@@ -14,14 +14,17 @@
   const form = document.getElementById("snail-bot-form");
   const input = document.getElementById("snail-bot-input");
   const sendButton = document.getElementById("snail-bot-send");
+  const countNode = document.getElementById("snail-bot-character-count");
   const assistantName = widget.dataset.assistantName || "Snail Bot";
   const greeting =
     widget.dataset.greeting ||
     "Assalamualaikum. Ask me about Rashid Zada's profile, skills, services, projects, experience, or contact details.";
   const chatUrl = widget.dataset.chatUrl;
+  const streamUrl = widget.dataset.streamUrl || chatUrl;
 
   let hasBootMessage = false;
   let isSending = false;
+  const history = [];
 
   function setPanelState(open) {
     widget.classList.toggle("is-open", open);
@@ -55,16 +58,18 @@
 
     const bubble = document.createElement("div");
     bubble.className = "snail-bot-bubble";
-    bubble.textContent = content;
+    bubble.textContent = content || "";
 
     wrapper.appendChild(meta);
     wrapper.appendChild(bubble);
-    return wrapper;
+    return { wrapper, meta, bubble };
   }
 
   function appendMessage(role, content, modeLabel) {
-    messages.appendChild(createMessageBubble(role, content, modeLabel));
+    const node = createMessageBubble(role, content, modeLabel);
+    messages.appendChild(node.wrapper);
     scrollMessagesToEnd();
+    return node;
   }
 
   function ensureGreeting() {
@@ -72,6 +77,7 @@
       return;
     }
     appendMessage("assistant", greeting, "profile");
+    history.push({ role: "assistant", content: greeting });
     hasBootMessage = true;
   }
 
@@ -82,6 +88,90 @@
     input.disabled = sending;
   }
 
+  function updateCounter() {
+    if (countNode) {
+      countNode.textContent = `${input.value.length}/400`;
+    }
+  }
+
+  function resizeInput() {
+    input.style.height = "auto";
+    input.style.height = Math.min(input.scrollHeight, 96) + "px";
+  }
+
+  function buildModeLabel(mode) {
+    if (mode === "deepseek") {
+      return "live ai";
+    }
+    if (mode === "guard") {
+      return "profile only";
+    }
+    return "local";
+  }
+
+  function setMessageMode(metaNode, mode) {
+    let badge = metaNode.querySelector(".snail-bot-mode-badge");
+    if (!badge) {
+      badge = document.createElement("span");
+      badge.className = "snail-bot-mode-badge";
+      metaNode.appendChild(badge);
+    }
+    badge.textContent = buildModeLabel(mode);
+  }
+
+  function setTypingBubble(node) {
+    node.wrapper.classList.add("snail-bot-message-typing");
+    node.bubble.innerHTML = '<span class="snail-bot-dots"><span></span><span></span><span></span></span>';
+  }
+
+  function clearTypingBubble(node) {
+    node.wrapper.classList.remove("snail-bot-message-typing");
+    if (!node.bubble.dataset.streamingReady) {
+      node.bubble.textContent = "";
+      node.bubble.dataset.streamingReady = "true";
+    }
+  }
+
+  async function consumeStream(response, bubbleNode) {
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let assistantReply = "";
+
+    while (true) {
+      const { value, done } = await reader.read();
+      buffer += decoder.decode(value || new Uint8Array(), { stream: !done });
+
+      let newlineIndex = buffer.indexOf("\n");
+      while (newlineIndex !== -1) {
+        const line = buffer.slice(0, newlineIndex).trim();
+        buffer = buffer.slice(newlineIndex + 1);
+
+        if (line) {
+          const event = JSON.parse(line);
+
+          if (event.type === "meta") {
+            setMessageMode(bubbleNode.meta, event.mode);
+            clearTypingBubble(bubbleNode);
+          } else if (event.type === "token") {
+            clearTypingBubble(bubbleNode);
+            assistantReply += event.content || "";
+            bubbleNode.bubble.textContent = assistantReply;
+            scrollMessagesToEnd();
+          }
+        }
+
+        newlineIndex = buffer.indexOf("\n");
+      }
+
+      if (done) {
+        break;
+      }
+    }
+
+    return assistantReply.trim();
+  }
+
   async function sendMessage(message) {
     const trimmed = (message || "").trim();
     if (!trimmed || isSending) {
@@ -90,52 +180,73 @@
 
     ensureGreeting();
     appendMessage("user", trimmed);
+    history.push({ role: "user", content: trimmed });
+
     input.value = "";
-    input.style.height = "";
+    resizeInput();
+    updateCounter();
     setSendingState(true);
 
-    const typingMessage = createMessageBubble("assistant", "Typing...", "");
-    typingMessage.classList.add("snail-bot-message-typing");
-    messages.appendChild(typingMessage);
-    scrollMessagesToEnd();
+    const assistantNode = appendMessage("assistant", "", "");
+    setTypingBubble(assistantNode);
 
     try {
-      const response = await fetch(chatUrl, {
+      const response = await fetch(streamUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "X-Requested-With": "XMLHttpRequest",
         },
-        body: JSON.stringify({ message: trimmed }),
+        body: JSON.stringify({
+          message: trimmed,
+          history: history.slice(-10),
+        }),
       });
-      const payload = await response.json();
-      typingMessage.remove();
 
-      if (!response.ok || !payload.ok) {
-        appendMessage(
-          "assistant",
-          "Snail Bot could not answer right now. Please try again with a profile-related question.",
-          "error"
-        );
-        return;
+      if (!response.ok || !response.body) {
+        throw new Error("Stream unavailable");
       }
 
-      const reply = payload.data || {};
-      const modeLabel =
-        reply.mode === "deepseek"
-          ? "ai"
-          : reply.mode === "guard"
-            ? "profile only"
-            : "local";
-      appendMessage("assistant", reply.message || greeting, modeLabel);
+      const assistantReply = await consumeStream(response, assistantNode);
+      if (assistantReply) {
+        history.push({ role: "assistant", content: assistantReply });
+      } else {
+        assistantNode.bubble.textContent =
+          "Snail Bot could not answer right now. Please try again with a profile-related question.";
+        setMessageMode(assistantNode.meta, "guard");
+      }
     } catch (error) {
-      typingMessage.remove();
-      appendMessage(
-        "assistant",
-        "Snail Bot is temporarily unavailable. Please ask again in a moment.",
-        "error"
-      );
+      try {
+        const fallbackResponse = await fetch(chatUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Requested-With": "XMLHttpRequest",
+          },
+          body: JSON.stringify({
+            message: trimmed,
+            history: history.slice(-10),
+          }),
+        });
+        const payload = await fallbackResponse.json();
+        clearTypingBubble(assistantNode);
+
+        if (!fallbackResponse.ok || !payload.ok) {
+          throw new Error("Fallback failed");
+        }
+
+        const reply = payload.data || {};
+        setMessageMode(assistantNode.meta, reply.mode);
+        assistantNode.bubble.textContent = reply.message || greeting;
+        history.push({ role: "assistant", content: assistantNode.bubble.textContent });
+      } catch (fallbackError) {
+        clearTypingBubble(assistantNode);
+        setMessageMode(assistantNode.meta, "guard");
+        assistantNode.bubble.textContent =
+          "Snail Bot is temporarily unavailable. Please try again in a moment.";
+      }
     } finally {
+      scrollMessagesToEnd();
       setSendingState(false);
       input.focus();
     }
@@ -178,7 +289,10 @@
   });
 
   input.addEventListener("input", function () {
-    input.style.height = "auto";
-    input.style.height = Math.min(input.scrollHeight, 112) + "px";
+    resizeInput();
+    updateCounter();
   });
+
+  updateCounter();
+  resizeInput();
 })();

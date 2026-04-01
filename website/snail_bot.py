@@ -1,3 +1,4 @@
+import json
 import os
 import re
 
@@ -12,6 +13,13 @@ from .profile_api import build_profile_payload
 PROFILE_ONLY_REPLY = (
     "I only answer questions about Rashid Zada's profile, services, projects, "
     "skills, experience, education, and contact details."
+)
+SYSTEM_PROMPT = (
+    "You are Snail Bot, the profile assistant for Rashid Zada. "
+    "Answer only questions about Rashid Zada's profile, projects, services, skills, "
+    "experience, education, availability, and contact details. "
+    "Use only the supplied profile context. If the answer is not in the context, say it is not listed. "
+    "If the question is unrelated, refuse briefly and direct the user back to profile questions."
 )
 GENERIC_PROFILE_HINTS = {
     "rashid",
@@ -411,55 +419,85 @@ def fallback_answer(question, payload):
     return " ".join(parts)
 
 
-def get_remote_answer(question, payload):
+def build_provider_messages(question, payload, history=None):
+    history = history or []
+    messages = [
+        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "system", "content": f"Profile context:\n{build_profile_context(payload)}"},
+    ]
+
+    for item in history[-8:]:
+        role = (item.get("role") or "").strip().lower()
+        content = (item.get("content") or "").strip()
+        if role in {"user", "assistant"} and content:
+            messages.append({"role": role, "content": content})
+
+    messages.append({"role": "user", "content": question.strip()})
+    return messages
+
+
+def chunk_text_for_stream(text, size=28):
+    buffer = ""
+    for character in text:
+        buffer += character
+        if len(buffer) >= size and character in {" ", ".", ",", "!", "?", ":", ";", "\n"}:
+            yield buffer
+            buffer = ""
+    if buffer:
+        yield buffer
+
+
+def get_openai_client():
     api_key = os.getenv("DEEPSEEK_API_KEY", "").strip()
     if not api_key or OpenAI is None:
-        return ""
-
-    client = OpenAI(
+        return None
+    return OpenAI(
         api_key=api_key,
         base_url=os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com").strip(),
     )
-    response = client.chat.completions.create(
+
+
+def stream_remote_answer(question, payload, history=None):
+    client = get_openai_client()
+    if client is None:
+        return None
+
+    return client.chat.completions.create(
         model=os.getenv("DEEPSEEK_MODEL", "deepseek-chat").strip(),
         temperature=0.2,
         max_tokens=400,
-        messages=[
-            {
-                "role": "system",
-                "content": (
-                    "You are Snail Bot, the profile assistant for Rashid Zada. "
-                    "Answer only questions about Rashid Zada's profile, projects, services, "
-                    "skills, experience, education, availability, and contact details. "
-                    "Use only the supplied profile context. If the answer is not in the context, "
-                    "say it is not listed. If the question is unrelated, refuse briefly."
-                ),
-            },
-            {
-                "role": "system",
-                "content": f"Profile context:\n{build_profile_context(payload)}",
-            },
-            {
-                "role": "user",
-                "content": question.strip(),
-            },
-        ],
+        stream=True,
+        messages=build_provider_messages(question, payload, history),
     )
-    return (response.choices[0].message.content or "").strip()
 
 
-def get_snail_bot_reply(question):
+def build_request_state(question):
     payload = build_profile_payload()
     site = payload.get("site", {})
     assistant_name = site.get("assistant_name", "Snail Bot")
     question_text = (question or "").strip()
+    greeting = site.get("assistant_greeting") or PROFILE_ONLY_REPLY
+    return {
+        "assistant_name": assistant_name,
+        "greeting": greeting,
+        "payload": payload,
+        "question_text": question_text,
+        "site": site,
+    }
+
+
+def get_snail_bot_reply(question, history=None):
+    state = build_request_state(question)
+    assistant_name = state["assistant_name"]
+    payload = state["payload"]
+    question_text = state["question_text"]
 
     if not question_text:
         return {
             "assistant": assistant_name,
             "related": True,
             "mode": "local",
-            "message": site.get("assistant_greeting") or PROFILE_ONLY_REPLY,
+            "message": state["greeting"],
         }
 
     if not is_profile_question(question_text, payload):
@@ -473,7 +511,14 @@ def get_snail_bot_reply(question):
     remote_error = ""
     remote_message = ""
     try:
-        remote_message = get_remote_answer(question_text, payload)
+        response = stream_remote_answer(question_text, payload, history=history)
+        if response is not None:
+            chunks = []
+            for item in response:
+                delta = item.choices[0].delta.content or ""
+                if delta:
+                    chunks.append(delta)
+            remote_message = "".join(chunks).strip()
     except Exception as exc:  # pragma: no cover - network/provider failures are environment-specific
         remote_error = str(exc)
 
@@ -495,3 +540,79 @@ def get_snail_bot_reply(question):
     if remote_error:
         response["provider_error"] = remote_error
     return response
+
+
+def iter_snail_bot_events(question, history=None):
+    state = build_request_state(question)
+    assistant_name = state["assistant_name"]
+    payload = state["payload"]
+    question_text = state["question_text"]
+
+    if not question_text:
+        yield {
+            "type": "meta",
+            "assistant": assistant_name,
+            "related": True,
+            "mode": "local",
+        }
+        for chunk in chunk_text_for_stream(state["greeting"]):
+            yield {"type": "token", "content": chunk}
+        yield {"type": "done"}
+        return
+
+    if not is_profile_question(question_text, payload):
+        yield {
+            "type": "meta",
+            "assistant": assistant_name,
+            "related": False,
+            "mode": "guard",
+        }
+        for chunk in chunk_text_for_stream(PROFILE_ONLY_REPLY):
+            yield {"type": "token", "content": chunk}
+        yield {"type": "done"}
+        return
+
+    remote_error = ""
+    remote_stream = None
+    try:
+        remote_stream = stream_remote_answer(question_text, payload, history=history)
+    except Exception as exc:  # pragma: no cover - network/provider failures are environment-specific
+        remote_error = str(exc)
+
+    if remote_stream is not None:
+        yield {
+            "type": "meta",
+            "assistant": assistant_name,
+            "related": True,
+            "mode": "deepseek",
+        }
+        try:
+            streamed_any = False
+            for item in remote_stream:
+                delta = item.choices[0].delta.content or ""
+                if delta:
+                    streamed_any = True
+                    yield {"type": "token", "content": delta}
+            if streamed_any:
+                yield {"type": "done"}
+                return
+        except Exception as exc:  # pragma: no cover - network/provider failures are environment-specific
+            remote_error = str(exc)
+
+    fallback_message = fallback_answer(question_text, payload)
+    meta = {
+        "type": "meta",
+        "assistant": assistant_name,
+        "related": True,
+        "mode": "local",
+    }
+    if remote_error:
+        meta["provider_error"] = remote_error
+    yield meta
+    for chunk in chunk_text_for_stream(fallback_message):
+        yield {"type": "token", "content": chunk}
+    yield {"type": "done"}
+
+
+def encode_stream_event(event):
+    return f"{json.dumps(event, ensure_ascii=False)}\n"

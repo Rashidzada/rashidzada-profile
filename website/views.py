@@ -1,6 +1,6 @@
 import json
 
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, JsonResponse, StreamingHttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
@@ -42,7 +42,7 @@ from .profile_api import (
     serialize_strength,
     serialize_typed_role,
 )
-from .snail_bot import get_snail_bot_reply
+from .snail_bot import encode_stream_event, get_snail_bot_reply, iter_snail_bot_events
 
 
 def api_success(data, status=200, **extra):
@@ -53,6 +53,23 @@ def api_success(data, status=200, **extra):
 
 def api_error(message, status=400):
     return JsonResponse({"ok": False, "error": message}, status=status)
+
+
+def parse_chat_payload(request):
+    try:
+        payload = json.loads(request.body.decode("utf-8") or "{}")
+    except json.JSONDecodeError:
+        payload = {}
+    if not isinstance(payload, dict):
+        payload = {}
+
+    history = payload.get("history")
+    if not isinstance(history, list):
+        history = []
+    return {
+        "message": (payload.get("message") or request.POST.get("message") or "").strip(),
+        "history": history,
+    }
 
 
 def build_page_context(active_page, page_key=None, **extra):
@@ -352,14 +369,22 @@ def project_detail_api(request, slug):
 @csrf_exempt
 @require_http_methods(["POST"])
 def snail_bot_chat_api(request):
-    try:
-        payload = json.loads(request.body.decode("utf-8") or "{}")
-    except json.JSONDecodeError:
-        payload = {}
-
-    message = (payload.get("message") or request.POST.get("message") or "").strip()
-    response = get_snail_bot_reply(message)
+    payload = parse_chat_payload(request)
+    response = get_snail_bot_reply(payload["message"], history=payload["history"])
     return api_success(response)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def snail_bot_stream_api(request):
+    payload = parse_chat_payload(request)
+    response = StreamingHttpResponse(
+        (encode_stream_event(event) for event in iter_snail_bot_events(payload["message"], history=payload["history"])),
+        content_type="application/x-ndjson; charset=utf-8",
+    )
+    response["Cache-Control"] = "no-cache"
+    response["X-Accel-Buffering"] = "no"
+    return response
 
 
 @csrf_exempt

@@ -1,3 +1,5 @@
+import json
+
 from django.core.management import call_command
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
@@ -168,6 +170,23 @@ class PageRoutingTests(TestCase):
         self.assertTrue(payload["data"]["related"])
         self.assertIn(payload["data"]["mode"], {"local", "deepseek"})
         self.assertIn("services", payload["data"]["message"].lower())
+
+    def test_snail_bot_stream_endpoint_streams_tokens(self):
+        response = self.client.post(
+            reverse("api-snail-bot-stream"),
+            data='{"message":"What services does Rashid offer?"}',
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        body = b"".join(response.streaming_content).decode("utf-8").strip().splitlines()
+        events = [json.loads(line) for line in body if line.strip()]
+
+        self.assertTrue(events)
+        self.assertEqual(events[0]["type"], "meta")
+        self.assertIn(events[0]["mode"], {"local", "deepseek"})
+        self.assertEqual(events[-1]["type"], "done")
+        self.assertTrue(any(event["type"] == "token" for event in events))
 
 
 class SuperuserCommandTests(TestCase):

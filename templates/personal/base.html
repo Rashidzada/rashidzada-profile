@@ -79,6 +79,7 @@
     class="snail-bot-widget"
     id="snail-bot-widget"
     data-chat-url="{% url 'api-snail-bot-chat' %}"
+    data-stream-url="{% url 'api-snail-bot-stream' %}"
     data-assistant-name="{{ site.assistant_name|default:'Snail Bot' }}"
     data-greeting="{{ site.assistant_greeting|escape }}"
   >
@@ -132,13 +133,19 @@
 
       <form class="snail-bot-form" id="snail-bot-form">
         <label class="visually-hidden" for="snail-bot-input">Ask Snail Bot</label>
-        <textarea
-          id="snail-bot-input"
-          class="snail-bot-input"
-          rows="1"
-          maxlength="400"
-          placeholder="Ask about skills, services, projects, experience, or contact details"
-        ></textarea>
+        <div class="snail-bot-composer">
+          <textarea
+            id="snail-bot-input"
+            class="snail-bot-input"
+            rows="1"
+            maxlength="400"
+            placeholder="Ask about skills, services, projects, experience, or contact details"
+          ></textarea>
+          <div class="snail-bot-composer-meta">
+            <span class="snail-bot-composer-hint">Enter to send</span>
+            <span class="snail-bot-character-count" id="snail-bot-character-count">0/400</span>
+          </div>
+        </div>
         <button type="submit" class="snail-bot-send" id="snail-bot-send">
           <i class="bi bi-send-fill"></i>
         </button>

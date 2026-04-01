@@ -37,6 +37,7 @@ urlpatterns = [
     path("api/projects/", views.project_list_api, name="api-projects"),
     path("api/projects/<slug:slug>/", views.project_detail_api, name="api-project-detail"),
     path("api/snail-bot/chat/", views.snail_bot_chat_api, name="api-snail-bot-chat"),
+    path("api/snail-bot/stream/", views.snail_bot_stream_api, name="api-snail-bot-stream"),
     path("index.html", RedirectView.as_view(pattern_name="home", permanent=True)),
     path("about.html", RedirectView.as_view(pattern_name="about", permanent=True)),
     path("resume.html", RedirectView.as_view(pattern_name="resume", permanent=True)),

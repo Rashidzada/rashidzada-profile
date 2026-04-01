@@ -43,6 +43,7 @@ Image handling in admin:
 Snail Bot:
 - Uses the OpenAI SDK against DeepSeek when `DEEPSEEK_API_KEY` is configured
 - Falls back to a local profile-only answer mode if the API key is missing
+- Streams replies to the frontend for a live chat feel
 - Does not answer unrelated questions by design
 
 For updates, run `python manage.py migrate`, `python manage.py ensure_superuser`, `python manage.py seed_portfolio` if content schema changed, then `python manage.py collectstatic --noinput`, and reload the app.

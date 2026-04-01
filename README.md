@@ -20,6 +20,7 @@ A production-oriented Django profile/portfolio project for Rashid Zada. The site
   - Google Drive URLs
 - JSON APIs for the profile, services, projects, and other seeded portfolio content
 - `Snail Bot`, a profile-only assistant with a DeepSeek/OpenAI SDK integration and a local fallback mode
+- Streamed Snail Bot replies for a more natural live-chat feel
 - PythonAnywhere deployment helpers and env-based production settings
 
 ## Main URLs
@@ -28,6 +29,7 @@ A production-oriented Django profile/portfolio project for Rashid Zada. The site
 - Admin: `http://127.0.0.1:8000/admin/`
 - Full profile API: `http://127.0.0.1:8000/api/profile/`
 - Snail Bot chat API: `http://127.0.0.1:8000/api/snail-bot/chat/`
+- Snail Bot stream API: `http://127.0.0.1:8000/api/snail-bot/stream/`
 
 ## Project structure
 
@@ -116,6 +118,7 @@ No template changes are needed when switching between these source types.
 ## Environment variables
 
 Copy values from [.env.example](/c:/Users/RashidZada/Downloads/Personal/.env.example).
+This project automatically loads local values from `.env` if that file exists.
 
 Important variables:
 
@@ -225,6 +228,14 @@ Example response shape:
     "message": "Rashid Zada offers these services: ..."
   }
 }
+```
+
+Stream endpoint:
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/snail-bot/stream/ \
+  -H "Content-Type: application/json" \
+  -d "{\"message\":\"Tell me about Rashid's projects\"}"
 ```
 
 ## Verification commands
