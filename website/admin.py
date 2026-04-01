@@ -45,6 +45,7 @@ SiteConfigurationAdminForm = build_image_admin_form(
         "favicon_image": {"label": "Favicon image", "folder": "site/favicon"},
         "apple_touch_icon": {"label": "Apple touch icon", "folder": "site/apple-touch"},
         "hero_background_image": {"label": "Hero background image", "folder": "site/hero"},
+        "assistant_icon": {"label": "Assistant icon", "folder": "site/assistant"},
     },
 )
 ProfileHighlightAdminForm = build_image_admin_form(
@@ -107,6 +108,7 @@ class SiteConfigurationAdmin(admin.ModelAdmin):
         "favicon_image_preview",
         "apple_touch_icon_preview",
         "hero_background_image_preview",
+        "assistant_icon_preview",
     )
     fieldsets = (
         (
@@ -116,6 +118,8 @@ class SiteConfigurationAdmin(admin.ModelAdmin):
                     ("site_name", "full_name"),
                     "headline",
                     ("hero_intro", "about_heading"),
+                    ("assistant_name",),
+                    "assistant_greeting",
                 )
             },
         ),
@@ -158,6 +162,8 @@ class SiteConfigurationAdmin(admin.ModelAdmin):
                     ("apple_touch_icon_upload", "apple_touch_icon_url_input", "apple_touch_icon_clear"),
                     "hero_background_image_preview",
                     ("hero_background_image_upload", "hero_background_image_url_input", "hero_background_image_clear"),
+                    "assistant_icon_preview",
+                    ("assistant_icon_upload", "assistant_icon_url_input", "assistant_icon_clear"),
                 ),
             },
         ),
@@ -167,6 +173,7 @@ class SiteConfigurationAdmin(admin.ModelAdmin):
     favicon_image_preview = preview_display("favicon_image", "Favicon image")
     apple_touch_icon_preview = preview_display("apple_touch_icon", "Apple touch icon")
     hero_background_image_preview = preview_display("hero_background_image", "Hero background image")
+    assistant_icon_preview = preview_display("assistant_icon", "Assistant icon")
 
 
 @admin.register(PageIntro)

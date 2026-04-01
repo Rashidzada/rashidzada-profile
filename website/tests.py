@@ -40,6 +40,7 @@ class PageRoutingTests(TestCase):
         self.assertContains(response, self.site.full_name)
         self.assertContains(response, "Full Stack Developer")
         self.assertContains(response, self.site.favicon_image)
+        self.assertContains(response, "Snail Bot")
 
     def test_about_page_avoids_old_placeholder_people_images(self):
         response = self.client.get(reverse("about"))
@@ -120,6 +121,53 @@ class PageRoutingTests(TestCase):
         self.assertContains(response, "Profile image upload")
         self.assertContains(response, "Profile image URL")
         self.assertContains(response, "Google Drive")
+
+    def test_profile_api_returns_seeded_content(self):
+        response = self.client.get(reverse("api-profile"))
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertTrue(payload["ok"])
+        self.assertEqual(payload["data"]["site"]["full_name"], "Rashid Zada")
+        self.assertEqual(payload["data"]["site"]["assistant_name"], "Snail Bot")
+        self.assertGreaterEqual(len(payload["data"]["services"]), 1)
+
+    def test_service_detail_api_returns_requested_service(self):
+        response = self.client.get(
+            reverse("api-service-detail", kwargs={"slug": self.first_service.slug})
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertTrue(payload["ok"])
+        self.assertEqual(payload["data"]["slug"], self.first_service.slug)
+
+    def test_snail_bot_rejects_unrelated_questions(self):
+        response = self.client.post(
+            reverse("api-snail-bot-chat"),
+            data='{"message":"What is the weather today?"}',
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertTrue(payload["ok"])
+        self.assertFalse(payload["data"]["related"])
+        self.assertIn("only answer questions about Rashid Zada", payload["data"]["message"])
+
+    def test_snail_bot_answers_profile_questions_without_provider_key(self):
+        response = self.client.post(
+            reverse("api-snail-bot-chat"),
+            data='{"message":"What services does Rashid offer?"}',
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertTrue(payload["ok"])
+        self.assertTrue(payload["data"]["related"])
+        self.assertIn(payload["data"]["mode"], {"local", "deepseek"})
+        self.assertIn("services", payload["data"]["message"].lower())
 
 
 class SuperuserCommandTests(TestCase):

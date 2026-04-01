@@ -10,6 +10,10 @@ Set the project up with these steps:
    `DJANGO_SUPERUSER_USERNAME`
    `DJANGO_SUPERUSER_EMAIL`
    `DJANGO_SUPERUSER_PASSWORD`
+   For Snail Bot with DeepSeek, also set:
+   `DEEPSEEK_API_KEY`
+   `DEEPSEEK_BASE_URL`
+   `DEEPSEEK_MODEL`
    Use only the hostname in `DJANGO_ALLOWED_HOSTS`.
    Correct: `rashidzada.pythonanywhere.com`
    Not valid for Django allowed hosts: `https://rashidzada.pythonanywhere.com/pythonnaywhere`
@@ -35,5 +39,10 @@ Image handling in admin:
 - Paste a public image URL
 - Paste a public Google Drive sharing URL
 - Clear the current image if needed
+
+Snail Bot:
+- Uses the OpenAI SDK against DeepSeek when `DEEPSEEK_API_KEY` is configured
+- Falls back to a local profile-only answer mode if the API key is missing
+- Does not answer unrelated questions by design
 
 For updates, run `python manage.py migrate`, `python manage.py ensure_superuser`, `python manage.py seed_portfolio` if content schema changed, then `python manage.py collectstatic --noinput`, and reload the app.

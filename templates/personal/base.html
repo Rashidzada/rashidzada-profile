@@ -75,6 +75,77 @@
     </div>
   </footer>
 
+  <div
+    class="snail-bot-widget"
+    id="snail-bot-widget"
+    data-chat-url="{% url 'api-snail-bot-chat' %}"
+    data-assistant-name="{{ site.assistant_name|default:'Snail Bot' }}"
+    data-greeting="{{ site.assistant_greeting|escape }}"
+  >
+    <button
+      type="button"
+      class="snail-bot-toggle"
+      id="snail-bot-toggle"
+      aria-controls="snail-bot-panel"
+      aria-expanded="false"
+      aria-label="Open {{ site.assistant_name|default:'Snail Bot' }}"
+    >
+      <span class="snail-bot-toggle-icon">
+        <img
+          src="{{ site.assistant_icon|asset_url }}"
+          alt="{{ site.assistant_name|default:'Snail Bot' }}"
+          class="snail-bot-icon-image"
+        >
+      </span>
+      <span class="snail-bot-toggle-copy">
+        <strong>{{ site.assistant_name|default:"Snail Bot" }}</strong>
+        <small>Profile only</small>
+      </span>
+    </button>
+
+    <section class="snail-bot-panel" id="snail-bot-panel" hidden aria-hidden="true">
+      <div class="snail-bot-panel-header">
+        <div class="snail-bot-panel-title">
+          <img
+            src="{{ site.assistant_icon|asset_url }}"
+            alt="{{ site.assistant_name|default:'Snail Bot' }}"
+            class="snail-bot-panel-icon"
+          >
+          <div>
+            <strong>{{ site.assistant_name|default:"Snail Bot" }}</strong>
+            <span>Answers only about Rashid Zada</span>
+          </div>
+        </div>
+        <button type="button" class="snail-bot-close" id="snail-bot-close" aria-label="Close assistant">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+
+      <div class="snail-bot-messages" id="snail-bot-messages"></div>
+
+      <div class="snail-bot-suggestions" id="snail-bot-suggestions">
+        <button type="button" class="snail-bot-chip">What does Rashid do?</button>
+        <button type="button" class="snail-bot-chip">Show Rashid's skills</button>
+        <button type="button" class="snail-bot-chip">Tell me about projects</button>
+        <button type="button" class="snail-bot-chip">How can I contact Rashid?</button>
+      </div>
+
+      <form class="snail-bot-form" id="snail-bot-form">
+        <label class="visually-hidden" for="snail-bot-input">Ask Snail Bot</label>
+        <textarea
+          id="snail-bot-input"
+          class="snail-bot-input"
+          rows="1"
+          maxlength="400"
+          placeholder="Ask about skills, services, projects, experience, or contact details"
+        ></textarea>
+        <button type="submit" class="snail-bot-send" id="snail-bot-send">
+          <i class="bi bi-send-fill"></i>
+        </button>
+      </form>
+    </section>
+  </div>
+
   <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
   <div id="preloader"></div>
 
@@ -89,6 +160,7 @@
   <script src="{% static 'assets/vendor/imagesloaded/imagesloaded.pkgd.min.js' %}"></script>
   <script src="{% static 'assets/vendor/isotope-layout/isotope.pkgd.min.js' %}"></script>
   <script src="{% static 'assets/js/main.js' %}"></script>
+  <script src="{% static 'assets/js/snail-bot.js' %}"></script>
 </body>
 
 </html>

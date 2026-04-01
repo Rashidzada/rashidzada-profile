@@ -7,6 +7,13 @@ class SiteConfiguration(models.Model):
     full_name = models.CharField(max_length=150)
     headline = models.CharField(max_length=255)
     hero_intro = models.CharField(max_length=50, default="I'm")
+    assistant_name = models.CharField(max_length=80, default="Snail Bot")
+    assistant_greeting = models.TextField(
+        default=(
+            "Assalamualaikum. I am Snail Bot. Ask me about Rashid Zada's profile, "
+            "skills, services, projects, experience, education, or contact details."
+        )
+    )
     about_heading = models.CharField(max_length=255)
     professional_summary = models.TextField()
     about_intro = models.TextField()
@@ -27,6 +34,7 @@ class SiteConfiguration(models.Model):
     favicon_image = models.CharField(max_length=255, default="assets/img/favicon.png")
     apple_touch_icon = models.CharField(max_length=255, default="assets/img/apple-touch-icon.png")
     hero_background_image = models.CharField(max_length=255, default="assets/img/hero-bg.jpg")
+    assistant_icon = models.CharField(max_length=255, default="assets/img/site/snail-bot.png")
 
     class Meta:
         verbose_name = "Site configuration"

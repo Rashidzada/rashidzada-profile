@@ -18,12 +18,16 @@ A production-oriented Django profile/portfolio project for Rashid Zada. The site
   - uploaded media files
   - external URLs
   - Google Drive URLs
+- JSON APIs for the profile, services, projects, and other seeded portfolio content
+- `Snail Bot`, a profile-only assistant with a DeepSeek/OpenAI SDK integration and a local fallback mode
 - PythonAnywhere deployment helpers and env-based production settings
 
 ## Main URLs
 
 - Site: `http://127.0.0.1:8000/`
 - Admin: `http://127.0.0.1:8000/admin/`
+- Full profile API: `http://127.0.0.1:8000/api/profile/`
+- Snail Bot chat API: `http://127.0.0.1:8000/api/snail-bot/chat/`
 
 ## Project structure
 
@@ -122,6 +126,9 @@ Important variables:
 - `DJANGO_SUPERUSER_USERNAME`
 - `DJANGO_SUPERUSER_EMAIL`
 - `DJANGO_SUPERUSER_PASSWORD`
+- `DEEPSEEK_API_KEY`
+- `DEEPSEEK_BASE_URL`
+- `DEEPSEEK_MODEL`
 - `PORTFOLIO_PROFILE_SOURCE`
 
 ### Allowed hosts note
@@ -163,6 +170,62 @@ python manage.py collectstatic --noinput
 /media/ -> /home/yourusername/Personal/media
 ```
 7. Reload the web app.
+
+## Profile APIs
+
+This project exposes JSON endpoints for the seeded Django content. Main endpoints:
+
+- `GET /api/profile/`
+- `GET /api/site-configuration/`
+- `GET /api/page-intros/`
+- `GET /api/social-links/`
+- `GET /api/typed-roles/`
+- `GET /api/about-facts/`
+- `GET /api/statistics/`
+- `GET /api/skills/`
+- `GET /api/certifications/`
+- `GET /api/languages/`
+- `GET /api/strengths/`
+- `GET /api/profile-highlights/`
+- `GET /api/education/`
+- `GET /api/experiences/`
+- `GET /api/services/`
+- `GET /api/services/<slug>/`
+- `GET /api/project-categories/`
+- `GET /api/projects/`
+- `GET /api/projects/<slug>/`
+
+Each endpoint returns a JSON object with `ok` and `data`.
+
+## Snail Bot
+
+`Snail Bot` is the floating site assistant. It only answers profile-related questions about Rashid Zada.
+
+- If `DEEPSEEK_API_KEY` is set, Snail Bot uses the OpenAI SDK against DeepSeek.
+- If the key is missing or the provider is unavailable, Snail Bot falls back to a local profile-aware responder.
+- Unrelated questions are rejected on purpose so the assistant stays focused on the portfolio.
+
+Chat endpoint:
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/snail-bot/chat/ \
+  -H "Content-Type: application/json" \
+  -d "{\"message\":\"What services does Rashid offer?\"}"
+```
+
+Example response shape:
+
+```json
+{
+  "ok": true,
+  "data": {
+    "assistant": "Snail Bot",
+    "related": true,
+    "mode": "local",
+    "message": "Rashid Zada offers these services: ..."
+  }
+}
+```
 
 ## Verification commands
 

@@ -35,6 +35,7 @@ DEFAULT_PROFILE_IMAGE = ""
 DEFAULT_FAVICON_IMAGE = "assets/img/favicon.png"
 DEFAULT_APPLE_TOUCH_ICON = "assets/img/apple-touch-icon.png"
 DEFAULT_HERO_BACKGROUND_IMAGE = "assets/img/hero-bg.jpg"
+DEFAULT_ASSISTANT_ICON = "assets/img/site/snail-bot.png"
 IMAGE_RESAMPLING = getattr(Image, "Resampling", Image).LANCZOS
 
 
@@ -105,6 +106,71 @@ class Command(BaseCommand):
 
         return hero_image.convert("RGB")
 
+    def build_snail_bot_icon(self):
+        size = 512
+        canvas = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+
+        glow = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+        glow_draw = ImageDraw.Draw(glow)
+        glow_draw.ellipse((64, 118, 448, 470), fill=(24, 210, 110, 54))
+        glow_draw.ellipse((138, 48, 374, 224), fill=(61, 149, 255, 64))
+        glow = glow.filter(ImageFilter.GaussianBlur(28))
+        canvas.alpha_composite(glow)
+
+        draw = ImageDraw.Draw(canvas)
+        draw.rounded_rectangle(
+            (118, 290, 390, 404),
+            radius=58,
+            fill=(105, 232, 145, 255),
+        )
+        draw.rounded_rectangle(
+            (108, 304, 404, 420),
+            radius=58,
+            fill=(39, 195, 105, 255),
+        )
+
+        shell = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+        shell_draw = ImageDraw.Draw(shell)
+        shell_draw.ellipse((170, 120, 374, 324), fill=(73, 149, 255, 255))
+        shell_draw.ellipse((196, 146, 348, 298), fill=(255, 255, 255, 224))
+        shell_draw.ellipse((216, 166, 328, 278), fill=(73, 149, 255, 255))
+        shell_draw.arc((214, 164, 330, 280), start=215, end=565, fill=(255, 255, 255, 255), width=11)
+        shell_draw.arc((238, 188, 306, 256), start=205, end=565, fill=(255, 255, 255, 224), width=9)
+        shell = shell.filter(ImageFilter.GaussianBlur(0.3))
+        canvas.alpha_composite(shell)
+
+        draw = ImageDraw.Draw(canvas)
+        draw.rounded_rectangle(
+            (250, 216, 332, 304),
+            radius=38,
+            fill=(246, 255, 250, 255),
+        )
+        draw.rounded_rectangle(
+            (140, 308, 268, 378),
+            radius=35,
+            fill=(105, 232, 145, 255),
+        )
+
+        for leg_x in (160, 214, 320, 370):
+            draw.rounded_rectangle(
+                (leg_x, 386, leg_x + 26, 432),
+                radius=13,
+                fill=(18, 164, 92, 255),
+            )
+
+        draw.line((324, 246, 372, 164), fill=(78, 212, 124, 255), width=8)
+        draw.line((294, 238, 244, 152), fill=(78, 212, 124, 255), width=8)
+        draw.ellipse((226, 132, 264, 170), fill=(255, 255, 255, 255))
+        draw.ellipse((352, 144, 390, 182), fill=(255, 255, 255, 255))
+        draw.ellipse((239, 145, 254, 160), fill=(13, 20, 29, 255))
+        draw.ellipse((365, 157, 380, 172), fill=(13, 20, 29, 255))
+
+        draw.arc((305, 265, 355, 308), start=14, end=172, fill=(12, 28, 18, 255), width=6)
+        draw.ellipse((157, 320, 184, 347), fill=(255, 255, 255, 72))
+        draw.ellipse((216, 188, 252, 224), fill=(255, 255, 255, 58))
+
+        return canvas
+
     def build_site_image_assets(self, profile_source):
         resolved_source = (profile_source or os.getenv("PORTFOLIO_PROFILE_SOURCE", "")).strip()
         image_paths = {
@@ -112,8 +178,13 @@ class Command(BaseCommand):
             "favicon_image": DEFAULT_FAVICON_IMAGE,
             "apple_touch_icon": DEFAULT_APPLE_TOUCH_ICON,
             "hero_background_image": DEFAULT_HERO_BACKGROUND_IMAGE,
+            "assistant_icon": DEFAULT_ASSISTANT_ICON,
             "has_custom_profile": False,
         }
+
+        SITE_IMAGE_DIR.mkdir(parents=True, exist_ok=True)
+        assistant_icon_target = SITE_IMAGE_DIR / "snail-bot.png"
+        self.build_snail_bot_icon().save(assistant_icon_target, format="PNG", optimize=True)
 
         if not resolved_source:
             return image_paths
@@ -175,6 +246,7 @@ class Command(BaseCommand):
             "favicon_image": "assets/img/site/favicon.png",
             "apple_touch_icon": "assets/img/site/apple-touch-icon.png",
             "hero_background_image": "assets/img/site/hero-background.jpg",
+            "assistant_icon": DEFAULT_ASSISTANT_ICON,
             "has_custom_profile": True,
         }
 
@@ -209,6 +281,11 @@ class Command(BaseCommand):
             full_name="Rashid Zada",
             headline="Full Stack Developer | Computer Science Teacher | AI & Networking Specialist",
             hero_intro="I'm",
+            assistant_name="Snail Bot",
+            assistant_greeting=(
+                "Assalamualaikum. I am Snail Bot. Ask me only about Rashid Zada's profile, "
+                "skills, services, projects, experience, education, or contact details."
+            ),
             about_heading="Full Stack Developer, Educator, and AI-Focused Problem Solver",
             professional_summary=(
                 "Highly motivated Full Stack Developer and Computer Science Teacher with 5+ years of teaching "
@@ -247,6 +324,7 @@ class Command(BaseCommand):
             favicon_image=image_paths["favicon_image"],
             apple_touch_icon=image_paths["apple_touch_icon"],
             hero_background_image=image_paths["hero_background_image"],
+            assistant_icon=image_paths["assistant_icon"],
         )
 
         page_intros = [
